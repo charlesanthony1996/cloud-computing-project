@@ -13,4 +13,4 @@ DT = 1.0 / RATE_HZ
 
 def sample(t):
     f = 1.8
-    
+    pass
