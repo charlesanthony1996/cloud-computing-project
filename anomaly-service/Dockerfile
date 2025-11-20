@@ -25,13 +25,13 @@ RUN rm -rf /app/train || true && \
     apt-get update && apt-get install -y unzip && \
     kaggle datasets download -d charlesanthony1996/mjff-train-defog-folder -p /app && \
     unzip /app/mjff-train-defog-folder.zip -d /app/train && \
-    rm /app/mjff-train-defog-folder.zip && \
+    rm /app/mjff-train-defog-folder.zip
     # echo "=== DEBUG CONTENT ===" && ls -R /app/train
 
 
 # RUN echo "=== DEBUG CONTENT ===" && ls -R /app/train
 
-COPY anomaly_service/. .
+COPY . .
 
 EXPOSE 8080
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
