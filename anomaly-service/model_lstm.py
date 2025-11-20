@@ -29,11 +29,22 @@ def load_mjff_train_data(train_folder):
         df = pd.read_csv(f)
         if "Valid" in df.columns:
             df = df[df["Valid"] == 1]
-        if not all(col in df.columns for col in ["AccV", "AccML", "AccAP", "GyroV", "GyroML", "GyroAP", "FoG"]):
-            continue
-        x = df[["AccV", "AccML", "AccAP", "GyroV", "GyroML", "GyroAP"]].values
 
-        y = df["FoG"].values
+        # if not all(col in df.columns for col in ["AccV", "AccML", "AccAP", "GyroV", "GyroML", "GyroAP", "FoG"]):
+        #     continue
+
+        # x = df[["AccV", "AccML", "AccAP", "GyroV", "GyroML", "GyroAP"]].values
+        # y = df["FoG"].values
+
+        needed = ["AccV", "AccML", "AccAP"]
+        label_cols = ["StartHesitation", "Turn", "Walking"]
+
+        if not all(c in df.columns for c in needed + label_cols):
+            continue
+
+        x = df[needed].values
+        y = df[label_cols].max(axis=1).values
+
         seq_len = 128
 
         for i in range(0, len(x)-seq_len, seq_len):
@@ -56,9 +67,9 @@ def train_lstm(train_folder):
     dataset = TensorDataset(x, y)
     loader = DataLoader(dataset, batch_size=64, shuffle=True)
 
-    model = SimpleLstm()
+    model = SimpleLstm(input_size=3)
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(dataset, batch_size=64, shuffle=True)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
     for epoch in range(5):
         for xb, yb in loader:
@@ -75,5 +86,3 @@ def train_lstm(train_folder):
 
 
     return model
-
-
