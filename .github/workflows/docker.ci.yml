@@ -20,4 +20,5 @@ jobs:
       - name: build images
         uses: docker compose build
       
-      
+      - name: start services
+        uses: docker compose up -d
