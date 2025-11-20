@@ -27,7 +27,7 @@ RUN rm -rf /app/train || true && \
 
 # RUN echo "=== DEBUG CONTENT ===" && ls -R /app/train
 
-COPY .
+COPY anomaly_service/. .
 
 EXPOSE 8080
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
