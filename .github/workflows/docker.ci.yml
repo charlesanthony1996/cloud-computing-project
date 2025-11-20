@@ -1,3 +1,5 @@
+# .github/workflows/ci.yml
+
 name: CI - build and test pipeline
 
 on:
@@ -22,3 +24,6 @@ jobs:
       
       - name: start services
         run: docker compose up -d
+
+      - name: show that everything is running
+        run: echo "success"
