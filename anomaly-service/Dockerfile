@@ -2,9 +2,13 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+# COPY requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt kaggle
+COPY anomaly-service/requirements.txt .
+# RUN pip install --no-cache-dir -r requirements.txt kaggle
+RUN pip install --no-cache-dir \
+    --extra-index-url https://download.pytorch.org/whl/cpu \
+    -r requirements.txt kaggle
 
 COPY kaggle.json /root/.kaggle/kaggle.json
 RUN chmod 600 /root/.kaggle/kaggle.json
