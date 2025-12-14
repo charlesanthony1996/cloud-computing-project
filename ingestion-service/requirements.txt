@@ -2,3 +2,7 @@
 torch
 numpy
 pandas
+uvicorn[standard]
+requests
+pydantic
+fastapi
