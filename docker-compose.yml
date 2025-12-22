@@ -4,7 +4,7 @@ services:
   ingestion:
     build: ./ingestion-service
     container_name: ingestion
-    # ports: ["8081:8081"]
+    ports: ["8081:8081"]
     # environment:
     #     - FEATURE_URL=http://feature:8082/features
     # networks: [stack]
