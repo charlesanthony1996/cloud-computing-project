@@ -1,17 +1,12 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY requirements.txt
-
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY main.py ./
+COPY main.py .
 
-ENV TARGET_URL=http://ingestion:8081/ingest
+EXPOSE 8083
 
-ENV SESSION_ID=s1
-
-ENV RATE_HZ=10
-
-CMD ["python", "main.py"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8083"] 

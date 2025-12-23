@@ -10,6 +10,7 @@ buffer = []
 
 
 anomaly_url = "http://anomaly:8080/predict"
+feature_url = "http://feature:8080/extract"
 
 class SensorSample(BaseModel):
     AccV: float
@@ -36,15 +37,22 @@ def ingest(sample: SensorSample):
             "buffered": len(buffer)
         }
     
+    # payload = {
+    #     "features": buffer[:buffer_size]
+    # }
+
     payload = {
-        "features": buffer[:buffer_size]
+        "window": buffer[:buffer_size]
     }
 
     buffer.clear()
 
     # send it to the anomaly service
     try:
-        response = requests.post(anomaly_url, json=payload, timeout=3)
+        response = requests.post(feature_url, json=payload, timeout=3)
+        result = response.json()
+
+        print("prediction: ", result)
         return {
             "ready": True,
             "anomaly_response": response.json()

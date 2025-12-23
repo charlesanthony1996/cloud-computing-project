@@ -23,6 +23,12 @@ services:
     ports:
         - "8082:8080"
 
+  generator:
+    build: ./generator-service
+    container_name: generator
+    ports:
+        - "8083:8083"
+
 
 # networks:
 #   stack: {}
