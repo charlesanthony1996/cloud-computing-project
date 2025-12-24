@@ -29,6 +29,15 @@ services:
     ports:
         - "8083:8083"
 
+  carbon:
+    build: ./carbon-controller-service
+    container_name: carbon
+    depends_on:
+      - ingestion
+      - generator
+    ports:
+      - "8084:8084"
+
 
 # networks:
 #   stack: {}
