@@ -7,6 +7,7 @@ app = FastAPI(title ="Ingestion service")
 # internal buffer
 buffer_size = 128
 buffer = []
+last_prediction = None
 
 
 anomaly_url = "http://anomaly:8080/predict"
@@ -23,7 +24,8 @@ def health():
     return {
         "ok": True,
         "buffer_size": len(buffer),
-        "required": buffer_size
+        "required": buffer_size,
+        "last_prediction": last_prediction
     }
 
 @app.post("/ingest")
@@ -51,6 +53,7 @@ def ingest(sample: SensorSample):
     try:
         response = requests.post(feature_url, json=payload, timeout=3)
         result = response.json()
+        last_prediction = result
 
         print("prediction: ", result)
         return {

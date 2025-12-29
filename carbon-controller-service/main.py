@@ -6,8 +6,11 @@ import time
 app = FastAPI(title = "Carbon controller service")
 
 # service urls
-ingestion_url = "http://localhost:8081/health"
-generator_rate_url = "http://localhost:8083/self-rate"
+# ingestion_url = "http://localhost:8081/health"
+# generator_rate_url = "http://localhost:8083/self-rate"
+
+ingestion_url = "http://ingestion:8081/health"
+generator_rate_url = "http://generator:8083/self-rate"
 
 # controller config
 poll_interval = 5
