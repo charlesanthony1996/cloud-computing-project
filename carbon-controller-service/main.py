@@ -7,6 +7,8 @@ from prometheus_client import Gauge, Counter,  generate_latest
 from fastapi import Response
 
 carbon_rate_gauge = Gauge("carbon_current_rate", "Current carbon-controlled rate")
+rate_map = {"low": 1, "medium": 2, "high": 3}
+
 
 rate_change_counter = Counter("carbon_rate_changes_total", "Number of rate changes")
 
@@ -57,7 +59,7 @@ def control_loop():
 
             if rate != last_rate:
                 requests.post(generator_rate_url, json={"rate": rate}, timeout = 2)
-                carbon_rate_gauge.set(rate)
+                carbon_rate_gauge.set(rate_map[rate])
                 rate_change_counter.inc()
                 last_rate = rate
                 print(f"[carbon-controller] rate set to {rate}")
