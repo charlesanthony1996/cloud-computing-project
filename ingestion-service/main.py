@@ -2,7 +2,20 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import requests
 
+from prometheus_client import Gauge, Counter, generate_latest
+from fastapi import Response
+
+buffer_gauge = Gauge("ingestion_buffer_size", "Current buffer size")
+pred_counter = Counter("ingestion_predictions_total", "Total predictions")
+fog_counter = Counter("ingestion_fog_total", "FoG predictions")
+
+
 app = FastAPI(title ="Ingestion service")
+
+@app.get("/metrics")
+def metrics():
+    buffer_gauge.set(len(buffer))
+    return Response(generate_latest(), media_type="text/plain")
 
 # internal buffer
 buffer_size = 128
@@ -53,6 +66,11 @@ def ingest(sample: SensorSample):
     try:
         response = requests.post(feature_url, json=payload, timeout=3)
         result = response.json()
+
+        pred_counter.inc()
+        if result.get("FoG"):
+            fog_counter.inc()
+            
         last_prediction = result
 
         print("prediction: ", result)
@@ -66,3 +84,5 @@ def ingest(sample: SensorSample):
             "ready": False,
             "error": str(e)
         }
+    
+

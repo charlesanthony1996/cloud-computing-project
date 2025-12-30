@@ -4,6 +4,11 @@ import time
 import threading
 import requests
 
+from prometheus_client import Gauge, generate_latest
+from fastapi import Response
+
+rate_gauge = Gauge("generator_rate", "Current generator rate")
+
 app = FastAPI(title="Data generator service")
 
 ingest_url = "http://ingestion:8081/ingest"
@@ -77,4 +82,9 @@ def status():
         "rate": current_rate,
         "samples_per_second": rates[current_rate]
     }
-     
+
+@app.get("/metrics")
+def metrics():
+    rate_gauge.set(rates[current_rate])
+    return Response(generate_latest(), media_type="text/plain")
+

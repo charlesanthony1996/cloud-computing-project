@@ -3,7 +3,18 @@ import requests
 import threading
 import time
 
+from prometheus_client import Gauge, Counter,  generate_latest
+from fastapi import Response
+
+carbon_rate_gauge = Gauge("carbon_current_rate", "Current carbon-controlled rate")
+
+rate_change_counter = Counter("carbon_rate_changes_total", "Number of rate changes")
+
 app = FastAPI(title = "Carbon controller service")
+
+@app.get("/metrics")
+def metrics():
+    return Response(generate_latest(), media_type="text/plain")
 
 # service urls
 # ingestion_url = "http://localhost:8081/health"
@@ -46,6 +57,8 @@ def control_loop():
 
             if rate != last_rate:
                 requests.post(generator_rate_url, json={"rate": rate}, timeout = 2)
+                carbon_rate_gauge.set(rate)
+                rate_change_counter.inc()
                 last_rate = rate
                 print(f"[carbon-controller] rate set to {rate}")
         
