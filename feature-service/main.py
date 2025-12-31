@@ -3,27 +3,43 @@ import numpy as np
 import requests
 import os
 
+# fastapi application instance
 app = FastAPI(title="Feature extractor service")
 
+# url of the anomaly detection service
+# read from the environment variable if provided
+# fallback uses docker service name -> "anomaly"
+# this keeps it portable nd configurable
 anomaly_url = os.getenv(
     "anomaly_url",
     "http://anomaly:8080/predict"
 )
 
+# reuiqred window time length -> matches model input
 seq_len = 128
+
+# number of sensor axes from a single IMU
 n_features = 3
 
+# utility function to normalize a time window
 def normalize(x: np.ndarray) -> np.ndarray:
 
+    # compute mean and std per axis
     mean = x.mean(axis = 0, keepdims=True)
+
+    # small epsilon avoids division by zero
     std = x.std(axis = 0, keepdims=True) + 1e-6
+
+    # returns normalized feature matrix
     return (x - mean) / std
 
-
+# health check endpoint
+# confirms that the service is alive
 @app.get("/health")
 def health():
     return {"ok": True, "service": "feature-extractor"}
 
+# 
 @app.post("/extract")
 def extract(payload: dict = Body(...)):
 
