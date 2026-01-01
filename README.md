@@ -23,7 +23,7 @@
 
 ### Step 5
 
-- login to grafan by this url
+- login to grafana by this url
 - http://localhost:9090
 
 ### Step 6

@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Body
 import torch, os, numpy as np
 from model_lstm import SimpleLstm, train_lstm
+from codecarbon import EmissionsTracker
 
 app = FastAPI(title="Anomaly service - lstm trainer & inference")
 
@@ -26,6 +27,15 @@ def health():
 
 @app.post("/predict")
 def predict(payload: dict = Body(...)):
+
+    tracker = EmissionsTracker(
+        project_name="fog-inference",
+        measure_power_specs=1,
+        log_level="error"
+    )
+
+    tracker.start()
+
     try:
         arr = np.array(payload["features"], dtype=np.float32)
 
@@ -48,6 +58,10 @@ def predict(payload: dict = Body(...)):
             pred = torch.argmax(out, dim = 1).item()
 
         return {"FoG": bool(pred), "prediction": pred}
+
+    finally:
+        emissions = tracker.stop()
+        print(f"{carbon} inference emissions: {emissions:.4f} kg CO2")
     
     except Exception as e:
         return {"error": str(e)}
