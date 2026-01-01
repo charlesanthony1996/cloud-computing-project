@@ -28,14 +28,35 @@
 
 ### Step 4
 
-- login to prometheus by this url
-- http://localhost:3000
+- Visit prometheus by this url
+- http://localhost:9090
+
+- Add data source:
+- Settings -> Data Sources -> Add
+- Type: Prometheus
+- url: http://localhost:9090
+- Save and test
 
 ### Step 5
 
 - login to grafana by this url
-- http://localhost:9090
+- http://localhost:3000
+- username: admin
+- password: admin
 
 ### Step 6
 
+- Force behaviour changes to test whether rate changes
+- curl -X POST http://localhost:8083/self-rate -H "Content-Type: application/json" -d '{"rate":"high"}'
 
+- The watch:
+- generator speed increases
+- ingestion fills faster
+- carbon controller works
+
+### Step 7
+
+- Create panels by typing these terms on the query input text field
+- ingestion_buffer_size
+- generator_rate
+- ingestion_fog_total
