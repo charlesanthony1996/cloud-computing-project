@@ -14,6 +14,9 @@ services:
     container_name: anomaly
     ports:
       - "8080:8080"
+    volumes:
+      - ./models/simple_lstm_model.pt:/app/simple_lstm_model.pt
+      - ./models/light_lstm_model.pt:/app/light_lstm_model.pt
 
   feature:
     build: ./feature-service

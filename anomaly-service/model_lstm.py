@@ -7,7 +7,7 @@ import glob
 import os
 
 class SimpleLstm(nn.Module):
-    def __init__(self, input_size = 6, hidden_size=32, num_layers=1, num_classes=2):
+    def __init__(self, input_size = 3, hidden_size=32, num_layers=1, num_classes=2):
         super().__init__()
         self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
         self.fc = nn.Linear(hidden_size, num_classes)
@@ -16,6 +16,18 @@ class SimpleLstm(nn.Module):
         out, _ = self.lstm(x)
         out = self.fc(out[:, -1, :])
         return out
+    
+class LightLstm(nn.Module):
+    def __init__(self, input_size = 3, hidden_size = 8, num_layers = 1, num_classes=2):
+        super().__init__()
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first = True)
+        self.fc = nn.Linear(hidden_size, num_classes)
+
+    def forward(self, x):
+        out, _ = self.lstm(x)
+        return self.fc(out[:, -1, :])
+
+
     
 
 

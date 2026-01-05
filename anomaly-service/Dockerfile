@@ -28,7 +28,8 @@ RUN rm -rf /app/train || true && \
     rm /app/mjff-train-defog-folder.zip
     # echo "=== DEBUG CONTENT ===" && ls -R /app/train
 
-
+# COPY simple_lstm_model.pt .
+# COPY light_lstm_model.pt .
 # RUN echo "=== DEBUG CONTENT ===" && ls -R /app/train
 
 COPY . .

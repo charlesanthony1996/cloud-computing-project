@@ -19,6 +19,8 @@ rate_map = {"low": 1, "medium": 2, "high": 3}
 # counts how many times the controller changed the rate
 rate_change_counter = Counter("carbon_rate_changes_total", "Number of rate changes")
 
+# inference_mode = Gauge("inference_mode", "0=eco, 1=performance")
+
 # fast api app instancing
 app = FastAPI(title = "Carbon controller service")
 
@@ -36,6 +38,7 @@ def metrics():
 # ingestion and generator containers are service names
 ingestion_url = "http://ingestion:8081/health"
 generator_rate_url = "http://generator:8083/self-rate"
+anomaly_mode_url = "http://anomaly:8080/mode"
 
 # controller config
 # seconds between checks
@@ -83,6 +86,11 @@ def control_loop():
 
             # decide the new rate
             rate = decide_rate(ingestion_status)
+
+            if rate == "high":
+                requests.post(anomaly_mode_url, json={"mode": "performance"})
+            else:
+                requests.post(anomaly_mode_url, json={"mode": "eco"})
 
             # apply the rate only if changed
             # this prevents unnecessary HTTP calls
@@ -132,4 +140,3 @@ def status():
         "last_rate": last_rate,
         "poll_interval_rate": poll_interval
     }
-
