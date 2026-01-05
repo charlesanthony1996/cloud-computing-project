@@ -130,19 +130,7 @@ The Carbon Controller dynamically balances this trade-off.
 
 ---
 
-## 7. Alignment with Course Requirements
-
-The FoG Prediction Platform satisfies all sustainability-related project requirements:
-
-- Sustainability considerations in deployment
-- Justified deployment strategy
-- Explicit carbon footprint measurement using CodeCarbon
-- Carbon-aware runtime behavior
-- Clear discussion of efficiency, carbon footprint, and cost trade-offs
-
----
-
-## 8. Conclusion
+## 7. Conclusion
 
 Sustainability in the FoG Prediction Platform is implemented as a **measurable, adaptive, and enforceable system property**.  
 Through container-based deployment, explicit carbon measurement, adaptive inference, and carbon-aware control logic, the system demonstrates how AI-driven architectures can balance performance, cost, and environmental impact.
