@@ -1,92 +1,94 @@
 # FoG Prediction Platform – Architecture Documentation
 
 This document describes the architecture of the **Freezing of Gait (FoG) Prediction Platform**.  
-The system is built using a **microservice architecture**, deployed via **Docker Compose**, and enhanced with **carbon-aware control** and **observability**.
+The system is implemented using a **microservice architecture**, deployed via **Docker Compose**, and enhanced with **carbon-aware control** and **observability**.
 
-Its purpose is to continuously generate gait sensor data, process it through a feature extraction and machine learning pipeline, detect FoG events, and dynamically adjust data generation rates to reduce energy consumption while preserving diagnostic accuracy.
+The platform continuously generates gait sensor data, processes it through a feature extraction and machine learning pipeline, detects FoG events, and dynamically adapts system behavior to reduce energy consumption while maintaining diagnostic accuracy.
 
 ---
 
 ## Overview
 
-The platform consists of the following key subsystems:
+The platform consists of the following major subsystems:
 
-- **Data Generation & Processing Pipeline**
+- **Data Generation and Processing Pipeline**
 - **Machine Learning–based FoG Detection**
 - **Carbon-Aware Control Layer**
 - **Observability Stack (Prometheus & Grafana)**
 
-Each subsystem is represented using UML diagrams to clearly show responsibilities, interactions, and deployment structure.
+The system architecture is documented using four UML diagrams:
+- Use Case Diagram
+- Component Diagram
+- Sequence Diagram
+- Deployment Diagram
 
 ---
 
 ## Deployment Diagram
 
-The deployment diagram shows **where each service runs** and **how services are deployed using Docker Compose** on a single host.
+The deployment diagram shows **where each service runs** and **how the system is deployed** using Docker Compose on a single host.
 
-![Deployment Diagram](deploy3.png)
+![Deployment Diagram](Deployment.png)
 
 ### Explanation
-- All services run on a **single Docker host**.
-- Each microservice is deployed as **one container per service**.
-- Internal service communication uses Docker’s internal DNS.
-- Exposed ports allow access to APIs and dashboards.
+- All services run on a **single Docker host**
+- Each microservice is deployed as **one container per service**
+- Services communicate using Docker’s internal networking
+- Selected ports are exposed for APIs and dashboards
 
-### Key Services
-- **Carbon Controller (8084)** – Adjusts generator rate based on system state.
-- **Generator (8083)** – Produces gait sensor data.
-- **Ingestion (8081)** – Buffers incoming sensor data.
-- **Feature Service (8082)** – Extracts normalized gait features.
-- **Anomaly Service (8080)** – ML-based FoG detection.
-- **Prometheus (9090)** – Collects metrics.
-- **Grafana (3000)** – Visualizes metrics.
+### Deployed Services
+- **Carbon Controller (8084)** – Controls data rate and inference mode
+- **Generator Service (8083)** – Generates gait sensor data
+- **Ingestion Service (8081)** – Buffers incoming sensor data
+- **Feature Service (8082)** – Extracts and normalizes gait features
+- **Anomaly Service (8080)** – Performs FoG prediction
+- **Prometheus (9090)** – Collects metrics
+- **Grafana (3000)** – Visualizes metrics
 
 ---
 
 ## Component Diagram
 
-The component diagram illustrates the **logical structure of the system**, grouped by responsibility.
+The component diagram illustrates the **logical structure of the system** and how services interact.
 
-![Component Diagram](comp3.png)
+![Component Diagram](Component.png)
 
 ### Explanation
-- **Control Layer**
-  - Carbon Controller applies control logic to adjust data generation rate.
 - **FoG Processing Pipeline**
   - Generator → Ingestion → Feature → Anomaly
-  - Data flows sequentially through the pipeline.
+- **Control Layer**
+  - Carbon Controller dynamically adjusts system behavior
 - **Observability Stack**
-  - Prometheus scrapes metrics from all services.
-  - Grafana queries Prometheus to visualize metrics.
+  - Prometheus scrapes metrics
+  - Grafana visualizes metrics
 
-### Why this matters
-This diagram makes it clear:
-- Which components depend on each other
-- Where control feedback loops exist
-- How observability is decoupled from core logic
+### Key Benefits
+- Clear separation of concerns
+- Explicit control feedback loop
+- Observability decoupled from core processing logic
 
 ---
 
 ## Sequence Diagram
 
-The sequence diagram shows **runtime interactions** during continuous gait monitoring.
+The sequence diagram describes **runtime behavior during continuous gait monitoring**.
 
-![Sequence Diagram](seq3.png)
+![Sequence Diagram](Sequence.png)
 
-### Explanation
-1. **Clinician** starts data collection.
-2. **Generator** streams gait sensor data.
-3. **Ingestion** buffers incoming data.
-4. **Feature Service** extracts gait features.
-5. **Anomaly Service** predicts FoG / no-FoG.
-6. **Prometheus** scrapes metrics from services.
-7. **Carbon Controller** adjusts generator rate.
-8. **Grafana** queries metrics for visualization.
+### Runtime Flow
+1. Clinician starts data collection
+2. Generator streams gait sensor data
+3. Ingestion buffers incoming samples
+4. Feature Service extracts gait features
+5. Anomaly Service predicts FoG / no-FoG
+6. Prometheus scrapes system metrics
+7. Carbon Controller adjusts data generation rate and inference mode
+8. Grafana queries metrics for visualization
 
-### Key Characteristics
-- Continuous loop for real-time monitoring
-- Clear separation of concerns
-- Carbon-aware feedback loop is explicit
+### Characteristics
+- Continuous monitoring loop
+- REST-based microservice communication
+- Carbon-aware feedback control
 
 ---
 
@@ -94,12 +96,12 @@ The sequence diagram shows **runtime interactions** during continuous gait monit
 
 The use case diagram captures **system functionality from a user and system perspective**.
 
-![Use Case Diagram](use3.png)
+![Use Case Diagram](Use_case.png)
 
 ### Actors
-- **Clinician** – Operates and controls the system.
-- **Prometheus** – Collects system metrics.
-- **Grafana** – Visualizes metrics.
+- **Clinician** – Operates and supervises the system
+- **Prometheus** – Collects metrics
+- **Grafana** – Visualizes metrics
 
 ### Main Use Cases
 - **UC1: Start Data Collection**
@@ -109,36 +111,32 @@ The use case diagram captures **system functionality from a user and system pers
 - **UC5: Optimize Energy Usage**
 - **NS1: Visualize Metrics**
 
-### Architecturally Significant Notes
-- Defines the need for:
-  - Generator and ingestion services
-  - ML-based anomaly detection
-  - Feedback control loop
-  - Prometheus instrumentation
+### Architectural Insights
+- Defines the need for generator and ingestion services
+- Requires ML-based anomaly detection
+- Introduces a carbon-aware feedback loop
+- Relies on Prometheus instrumentation
 
 ---
 
 ## Design Rationale
 
-- **Microservices** improve modularity and scalability
-- **REST APIs** simplify service communication
+- **Microservices** improve modularity and maintainability
+- **REST APIs** provide loose coupling between services
 - **Docker Compose** enables reproducible deployment
-- **Prometheus + Grafana** provide transparent observability
-- **Carbon Controller** introduces sustainability-aware system behavior
+- **Prometheus and Grafana** provide observability
+- **Carbon-aware control** enables sustainability-oriented system adaptation
 
 ---
 
 ## Summary
 
-These UML diagrams together provide a **complete architectural view** of the FoG Prediction Platform:
+The four UML diagrams together provide a **complete architectural view** of the FoG Prediction Platform:
 
-| Diagram Type | Purpose |
-|-------------|--------|
-| Deployment | Where the system runs |
+| Diagram | Purpose |
+|------|--------|
+| Use Case | What the system does and why |
 | Component | How the system is structured |
 | Sequence | How the system behaves at runtime |
-| Use Case | What the system does and why |
+| Deployment | Where the system runs |
 
-This documentation ensures the architecture is **clear, consistent, and aligned with the actual implementation**.
-
----
