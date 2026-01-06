@@ -8,7 +8,7 @@
 The **FoG Prediction Platform** was designed with sustainability as a core architectural concern, alongside accuracy, modularity, and observability.  
 The system processes continuous gait sensor data to detect *Freezing of Gait (FoG)* events using machine learning, while dynamically adapting its behavior to reduce energy consumption and carbon emissions.
 
-Sustainability is addressed both at **design time** (architecture and deployment decisions) and at **runtime** (carbon-aware control and monitoring).
+Sustainability is addressed both at **design time** (architecture and deployment decisions) and at **runtime** (carbon-aware control, adaptive inference, and monitoring).
 
 ---
 
@@ -18,6 +18,8 @@ The platform explicitly considers trade-offs between **scalability, energy effic
 Rather than optimizing for maximum scalability, the system prioritizes **efficient resource usage and adaptive behavior**, which is more appropriate for continuous monitoring workloads with variable demand.
 
 A **container-based deployment** using Docker Compose on a single host was chosen to minimize baseline energy consumption while maintaining modularity and reproducibility.
+
+In addition, **model training is handled separately from runtime inference**, ensuring that energy-intensive training workloads do not impact the sustainability of continuous system operation.
 
 ---
 
@@ -44,7 +46,7 @@ While deployed locally, the architecture remains **portable to cloud environment
 The **Anomaly Service** uses the **CodeCarbon** Python library to measure carbon emissions during machine learning inference.
 
 Key characteristics:
-- Emissions are measured per inference execution
+- Emissions are measured **at runtime for each inference execution**
 - Results are reported in **kg CO₂ equivalent**
 - Measurements are tied to actual computation, not estimates
 
@@ -54,13 +56,18 @@ This fulfills the requirement for **explicit carbon footprint assessment**.
 
 ### 4.2 Sustainability Metrics and Observability
 
-System and sustainability-related metrics are exposed via **Prometheus** and visualized using **Grafana**.  
-These metrics include inference mode, data generation rate, buffer pressure, and prediction activity.
+System and sustainability-related metrics are exposed via **Prometheus** and visualized using **Grafana**.
+
+These metrics include:
+- Inference mode selection (**eco vs performance**)
+- Data generation rate
+- Ingestion buffer pressure
+- Prediction activity and system load
 
 This ensures sustainability is:
 - Observable at runtime
 - Measurable and auditable
-- Treated as an operational concern
+- Treated as an operational concern rather than a conceptual one
 
 ---
 
@@ -75,6 +82,8 @@ Instead of relying on an external carbon-intensity API, the system **simulates c
 - System activity level
 - Detection of FoG events
 
+These internal signals act as **proxies for energy demand**, enabling carbon-aware decisions without external dependencies.
+
 ---
 
 ### 5.2 Adaptive Data Generation
@@ -84,17 +93,18 @@ The Generator Service supports multiple sampling rates:
 - **Medium** – balanced operation
 - **High** – increased resolution during critical events
 
-The Carbon Controller dynamically adjusts the rate to reduce unnecessary computation while preserving diagnostic accuracy.
+The Carbon Controller dynamically adjusts the sampling rate to reduce unnecessary computation while preserving diagnostic accuracy.
 
 ---
 
 ### 5.3 Energy-Aware Model Selection
 
-The Anomaly Service supports two inference modes:
+The Anomaly Service supports **two inference models**:
 - **Eco mode** – lightweight LSTM model with reduced computational cost
 - **Performance mode** – larger LSTM model with higher accuracy
 
-The system defaults to eco mode and switches to performance mode only when clinically relevant FoG events are detected.
+The Carbon Controller explicitly sets the inference mode at runtime via a control endpoint.  
+This enables **dynamic switching between energy-efficient and high-accuracy inference**, depending on system state and clinical relevance.
 
 ---
 
@@ -107,7 +117,7 @@ The system defaults to eco mode and switches to performance mode only when clini
 | Eco Mode | Moderate | Low |
 | Performance Mode | High | Higher |
 
-The platform prioritizes energy efficiency by default, increasing computational cost only when justified.
+The platform prioritizes energy efficiency by default and increases computational cost only when clinically justified.
 
 ---
 
@@ -126,12 +136,13 @@ This trade-off is intentional and aligned with sustainability goals.
 - Lower sampling rates reduce energy usage but increase latency
 - Higher rates improve responsiveness at increased carbon cost
 
-The Carbon Controller dynamically balances this trade-off.
+The Carbon Controller dynamically balances this trade-off at runtime.
 
 ---
 
 ## 7. Conclusion
 
 Sustainability in the FoG Prediction Platform is implemented as a **measurable, adaptive, and enforceable system property**.  
-Through container-based deployment, explicit carbon measurement, adaptive inference, and carbon-aware control logic, the system demonstrates how AI-driven architectures can balance performance, cost, and environmental impact.
+Through container-based deployment, explicit carbon measurement, offline model training, adaptive inference, and carbon-aware control logic, the system demonstrates how AI-driven architectures can balance performance, cost, and environmental impact.
+
 
