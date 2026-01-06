@@ -277,17 +277,4 @@ Verify dashboards and metric visualization.
 
 docker compose down  
 
----
-
-## 11. Workflow Summary
-
-This workflow verifies:
-
-- Correct microservice deployment  
-- End-to-end FoG prediction pipeline  
-- Manual and automatic inference mode switching  
-- Polling-based carbon-aware control  
-- Observable, sustainability-driven system behavior  
-
-The FoG Prediction Platform demonstrates an adaptive AI architecture that balances accuracy, performance, and environmental impact.
 
