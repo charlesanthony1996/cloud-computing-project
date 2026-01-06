@@ -5,7 +5,10 @@ import requests
 from prometheus_client import Gauge, Counter, generate_latest
 from fastapi import Response
 
+# prometheus gauge exposing the current size of the ingestion buffer
 buffer_gauge = Gauge("ingestion_buffer_size", "Current buffer size")
+
+# 
 pred_counter = Counter("ingestion_predictions_total", "Total predictions")
 fog_counter = Counter("ingestion_fog_total", "FoG predictions")
 
