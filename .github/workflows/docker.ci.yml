@@ -27,3 +27,15 @@ jobs:
 
       - name: show that everything is running
         run: echo "success"
+
+      - name: wait for services
+        run: sleep 15
+
+      - name: health check ingestion
+        run: curl --fail http://localhost:8081/health
+
+      - name: health check anomaly
+        run: curl --fail http://localhost:8080/health
+
+      - name: stop services
+        run: docker compose down
