@@ -76,19 +76,22 @@ The sequence diagram describes **runtime behavior during continuous gait monitor
 ![Sequence Diagram](Sequence.png)
 
 ### Runtime Flow
-1. Clinician starts data collection
-2. Generator streams gait sensor data
-3. Ingestion buffers incoming samples
-4. Feature Service extracts gait features
-5. Anomaly Service predicts FoG / no-FoG
-6. Prometheus scrapes system metrics
-7. Carbon Controller adjusts data generation rate and inference mode
-8. Grafana queries metrics for visualization
+1. Clinician starts data collection  
+2. Generator streams gait sensor data  
+3. Ingestion buffers incoming samples  
+4. Feature Service extracts gait features  
+5. Anomaly Service predicts FoG / no-FoG  
+6. Prometheus periodically scrapes system metrics  
+7. Carbon Controller **polls metrics at regular intervals** and adjusts:
+   - data generation rate  
+   - inference mode (eco / performance)  
+8. Grafana queries metrics for visualization  
 
 ### Characteristics
-- Continuous monitoring loop
-- REST-based microservice communication
-- Carbon-aware feedback control
+- Continuous monitoring loop  
+- REST-based microservice communication  
+- **Polling-based carbon-aware feedback control**  
+- Pull-based observability using Prometheus  
 
 ---
 
