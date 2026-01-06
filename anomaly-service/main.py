@@ -7,6 +7,7 @@ from codecarbon import EmissionsTracker
 
 from prometheus_client import Gauge, generate_latest
 
+
 app = FastAPI(title="Anomaly service - lstm trainer & inference")
 
 model_path = "lstm_model.pt"
