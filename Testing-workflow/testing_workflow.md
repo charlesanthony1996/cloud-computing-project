@@ -130,9 +130,7 @@ An increasing buffer size confirms continuous data ingestion and end-to-end ML i
 
 ### 5.1 Force Eco Mode
 
-curl -X POST http://localhost:8080/mode  
--H "Content-Type: application/json"  
--d '{"mode":"eco"}'  
+curl -X POST http://localhost:8080/mode -H "Content-Type: application/json" -d '{"mode":"eco"}'
 
 Verify model mode via anomaly service:
 
@@ -146,9 +144,7 @@ Expected output:
 
 ### 5.2 Switch Back to Performance Mode
 
-curl -X POST http://localhost:8080/mode  
--H "Content-Type: application/json"  
--d '{"mode":"performance"}'  
+curl -X POST http://localhost:8080/mode -H "Content-Type: application/json" -d '{"mode":"performance"}'
 
 Verify again:
 
@@ -166,9 +162,7 @@ This confirms correct manual model switching logic.
 
 ### 6.1 Increase Generator Rate
 
-curl -X POST http://localhost:8083/self-rate  
--H "Content-Type: application/json"  
--d '{"rate":"high"}'  
+curl -X POST http://localhost:8083/self-rate -H "Content-Type: application/json" -d '{"rate":"high"}'
 
 Observed behavior:
 
@@ -196,9 +190,7 @@ Expected behavior:
 
 ### 7.1 Force Performance Mode
 
-curl -X POST http://localhost:8080/mode  
--H "Content-Type: application/json"  
--d '{"mode":"performance"}'  
+curl -X POST http://localhost:8080/mode -H "Content-Type: application/json" -d '{"mode":"performance"}'
 
 Observed behavior:
 
@@ -245,9 +237,7 @@ done
 
 ### 8.4 Force High Rate Again
 
-curl -X POST http://localhost:8083/self-rate  
--H "Content-Type: application/json"  
--d '{"rate":"high"}'  
+curl -X POST http://localhost:8083/self-rate -H "Content-Type: application/json" -d '{"rate":"high"}' 
 
 Observed behavior:
 
