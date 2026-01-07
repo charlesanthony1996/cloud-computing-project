@@ -75,36 +75,50 @@ This ensures sustainability is:
 
 ### 5.1 Carbon Controller
 
-A dedicated **Carbon Controller service** implements a feedback control loop that adapts system behavior at runtime.
+A dedicated **Carbon Controller service** implements a **polling-based feedback control loop** that adapts system behavior at runtime.  
+The controller periodically queries internal system state every **5 seconds**, including ingestion buffer pressure and recent prediction outcomes.
 
-Instead of relying on an external carbon-intensity API, the system **simulates carbon-aware behavior** using internal system signals such as:
-- Ingestion buffer pressure
-- System activity level
-- Detection of FoG events
+**Explicit Startup Design:**  
+Both the Generator Service and Carbon Controller require **manual activation via POST requests** after container deployment. This design choice ensures:
+- Services remain inactive until explicitly needed
+- Zero energy consumption during idle periods
+- Sustainability-by-default system behavior
+- Clear operational control over resource usage
 
-These internal signals act as **proxies for energy demand**, enabling carbon-aware decisions without external dependencies.
+The explicit startup requirement is operationalized as:
+
+# Activate data generation
+curl -X POST http://localhost:8083/start
+
+# Activate carbon-aware control
+curl -X POST http://localhost:8084/start
 
 ---
 
 ### 5.2 Adaptive Data Generation
 
 The Generator Service supports multiple sampling rates:
-- **Low** – energy-efficient baseline
-- **Medium** – balanced operation
-- **High** – increased resolution during critical events
-
-The Carbon Controller dynamically adjusts the sampling rate to reduce unnecessary computation while preserving diagnostic accuracy.
+- **Low (1 sample/second)** – energy-efficient baseline
+- **Medium (5 samples/second)** – balanced operation
+- **High (10 samples/second)** – increased resolution during critical events
 
 ---
 
 ### 5.3 Energy-Aware Model Selection
 
 The Anomaly Service supports **two inference models**:
-- **Eco mode** – lightweight LSTM model with reduced computational cost
-- **Performance mode** – larger LSTM model with higher accuracy
+- **Eco mode** – Light LSTM with 8 hidden units, reduced computational cost
+- **Performance mode** – Simple LSTM with 32 hidden units, higher accuracy
 
-The Carbon Controller explicitly sets the inference mode at runtime via a control endpoint.  
-This enables **dynamic switching between energy-efficient and high-accuracy inference**, depending on system state and clinical relevance.
+**Default Behavior:**
+The system initializes in **performance mode** to ensure maximum diagnostic accuracy during startup and initial operation. However, the Carbon Controller actively monitors system state and switches to eco mode when conditions allow for energy savings without compromising clinical effectiveness.
+
+This design prioritizes **initial accuracy** while enabling **runtime energy optimization** through the carbon-aware control loop. The Carbon Controller dynamically adjusts the inference mode based on:
+- Detection of FoG events (escalate to performance)
+- Normal operation periods (reduce to eco)
+- System load and buffer pressure
+
+Manual inference mode changes via the `/mode` endpoint are treated as **temporary overrides** and may be reverted by the Carbon Controller to maintain optimal balance between accuracy and energy efficiency.
 
 ---
 
@@ -117,7 +131,8 @@ This enables **dynamic switching between energy-efficient and high-accuracy infe
 | Eco Mode | Moderate | Low |
 | Performance Mode | High | Higher |
 
-The platform prioritizes energy efficiency by default and increases computational cost only when clinically justified.
+**Initial Mode Selection:**
+The platform defaults to performance mode at startup to ensure maximum accuracy during system initialization and validation. Once the Carbon Controller activates, it takes over mode management and switches to eco mode during normal operation. This approach balances the need for reliable startup diagnostics with long-term energy efficiency, increasing computational cost only when clinically justified.
 
 ---
 
@@ -143,6 +158,10 @@ The Carbon Controller dynamically balances this trade-off at runtime.
 ## 7. Conclusion
 
 Sustainability in the FoG Prediction Platform is implemented as a **measurable, adaptive, and enforceable system property**.  
-Through container-based deployment, explicit carbon measurement, offline model training, adaptive inference, and carbon-aware control logic, the system demonstrates how AI-driven architectures can balance performance, cost, and environmental impact.
+
+Through container-based deployment, explicit carbon measurement, offline model training, adaptive inference, explicit service activation, and polling-based carbon-aware control logic, the system demonstrates how AI-driven architectures can balance performance, cost, and environmental impact.
+
+The platform treats sustainability as a **first-class architectural concern** alongside traditional quality attributes such as reliability, performance, and security. This approach provides a template for designing future AI systems that are both effective and environmentally responsible.
+
 
 
