@@ -106,7 +106,7 @@ Key characteristics:
 
 Manual changes to generator rate or inference mode are treated as **temporary overrides** and may be reverted automatically to maintain energy-efficient operation.
 
-By default, the system favors **eco mode** and **low sampling rates**, escalating resource usage only when system conditions justify it.
+The system initializes in **performance mode** to ensure diagnostic accuracy during startup, but the Carbon Controller actively switches to **eco mode** during normal operation. Data generation defaults to **low sampling rate**, escalating only when buffer pressure or FoG events require higher resolution.
 
 ---
 
