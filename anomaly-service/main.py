@@ -7,6 +7,28 @@ from codecarbon import EmissionsTracker
 
 from prometheus_client import Gauge, generate_latest
 
+import random
+import time
+from codecarbon import EmissionsTracker
+
+# Simulated carbon intensity (kg CO2e / kWh) - in real world fetched from electricity maps API
+# For demo: pretend it changes over time or based on time of day
+def get_simulated_carbon_intensity():
+    # Example: higher during peak hours (simulated)
+    hour = time.localtime().tm_hour
+    if 8 <= hour <= 20:  # day = higher carbon (coal/gas mix)
+        return 0.55
+    else:
+        return 0.25  # night = lower (more renewables)
+    
+# Config via env (for future k8s configMap / secret)
+CARBON_THRESHOLD = float(os.getenv("CARBON_THRESHOLD", "0.40"))  # kg CO2e/kWh
+SLO_LATENCY_MS = 500  # example SLO: p95 latency < 500ms
+SLO_ERROR_RATE = 0.01
+
+# Global flag for which model to use (eco = light, performance = simple)
+USE_LIGHT_MODEL = True  # default eco
+
 
 app = FastAPI(title="Anomaly service - lstm trainer & inference")
 
@@ -60,49 +82,49 @@ def health():
     return {"ok": True, "mode": MODE, "models_loaded": True}
     # return { "ok": True, "model": "SimpleLSTM", "trained": os.path.exists(model_path)}
 
-@app.post("/predict")
-def predict(payload: dict = Body(...)):
+# @app.post("/predict")
+# def predict(payload: dict = Body(...)):
 
-    tracker = EmissionsTracker(
-        project_name="fog-inference",
-        measure_power_specs=1,
-        log_level="error"
-    )
+#     tracker = EmissionsTracker(
+#         project_name="fog-inference",
+#         measure_power_specs=1,
+#         log_level="error"
+#     )
 
-    tracker.start()
+#     tracker.start()
 
-    try:
-        arr = np.array(payload["features"], dtype=np.float32)
+#     try:
+#         arr = np.array(payload["features"], dtype=np.float32)
 
-        # validate: must be (n, 3)
-        if arr.ndim != 2 or arr.shape[1] != 3:
-            return {"error": "features must be list of [AccV, AccML, AccAP] triplets"}
+#         # validate: must be (n, 3)
+#         if arr.ndim != 2 or arr.shape[1] != 3:
+#             return {"error": "features must be list of [AccV, AccML, AccAP] triplets"}
         
-        # zero pad or truncate to exactly 128 steps
-        if arr.shape[0] >= 128:
-            arr = arr[:128]
+#         # zero pad or truncate to exactly 128 steps
+#         if arr.shape[0] >= 128:
+#             arr = arr[:128]
 
-        else:
-            padding = np.zeros((128 - arr.shape[0], 3), dtype=np.float32)
-            arr = np.vstack((arr, padding))
+#         else:
+#             padding = np.zeros((128 - arr.shape[0], 3), dtype=np.float32)
+#             arr = np.vstack((arr, padding))
 
-        x = torch.tensor(arr).unsqueeze(0)
+#         x = torch.tensor(arr).unsqueeze(0)
 
-        # model switching logic
-        model = light_model if MODE == "eco" else simple_model
+#         # model switching logic
+#         model = light_model if MODE == "eco" else simple_model
 
-        with torch.no_grad():
-            out = model(x)
-            pred = torch.argmax(out, dim = 1).item()
+#         with torch.no_grad():
+#             out = model(x)
+#             pred = torch.argmax(out, dim = 1).item()
 
-        return {"FoG": bool(pred), "prediction": pred, "mode": MODE}
+#         return {"FoG": bool(pred), "prediction": pred, "mode": MODE}
     
-    except Exception as e:
-        return {"error": str(e)}
+#     except Exception as e:
+#         return {"error": str(e)}
 
-    finally:
-        emissions = tracker.stop()
-        print(f"inference emissions: {emissions:.4f} kg CO2")
+#     finally:
+#         emissions = tracker.stop()
+#         print(f"inference emissions: {emissions:.4f} kg CO2")
     
     # except Exception as e:
     #     return {"error": str(e)}
@@ -136,3 +158,64 @@ def set_mode(body: dict):
 @app.get("/metrics")
 def metrics():
     return Response(generate_latest(), media_type="text/plain")
+
+
+
+@app.post("/predict")
+def predict(payload: dict):
+    global USE_LIGHT_MODEL
+
+    tracker = EmissionsTracker()
+    tracker.start()
+
+    try:
+        # Simulate carbon-aware decision (every request or every few minutes)
+        current_intensity = get_simulated_carbon_intensity()
+
+        if current_intensity > CARBON_THRESHOLD:
+            # High carbon → force eco mode (light model)
+            USE_LIGHT_MODEL = True
+            print(f"[Carbon Aware] High intensity ({current_intensity:.2f}) → eco mode")
+        else:
+            # Low carbon → allow performance mode if SLOs ok
+            # In real: check Prometheus metrics (latency, error rate)
+            # Here we simulate: assume SLO ok 90% of time
+            if random.random() < 0.9:
+                USE_LIGHT_MODEL = False
+                print(f"[Carbon Aware] Low intensity → performance mode (SLO ok)")
+            else:
+                USE_LIGHT_MODEL = True
+                print(f"[Carbon Aware] Low intensity but SLO violation → fallback eco")
+
+        arr = np.array(payload["features"], dtype=np.float32)
+
+        # validate: must be (n, 3)
+        if arr.ndim != 2 or arr.shape[1] != 3:
+            return {"error": "features must be list of [AccV, AccML, AccAP] triplets"}
+        
+        # zero pad or truncate to exactly 128 steps
+        if arr.shape[0] >= 128:
+            arr = arr[:128]
+
+        else:
+            padding = np.zeros((128 - arr.shape[0], 3), dtype=np.float32)
+            arr = np.vstack((arr, padding))
+
+        x = torch.tensor(arr).unsqueeze(0)
+
+        # model switching logic
+        model = light_model if MODE == "eco" else simple_model
+
+        with torch.no_grad():
+            out = model(x)
+            pred = torch.argmax(out, dim = 1).item()
+
+        # Measure emissions for this request
+        emissions = tracker.stop()
+        print(f"Request emissions: {emissions:.6f} kg CO2e")
+
+        return {"FoG": bool(pred), "mode": "eco" if USE_LIGHT_MODEL else "performance"}
+
+    except Exception as e:
+        tracker.stop()
+        return {"error": str(e)}

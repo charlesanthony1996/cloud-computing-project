@@ -5,11 +5,23 @@ scrape_configs:
   - job_name: "ingestion"
     static_configs:
       - targets: ["ingestion:8081"]
+    metrics_path: '/metrics'
 
   - job_name: "generator"
     static_configs:
       - targets: ["generator:8083"]
+    metrics_path: '/metrics'
     
   - job_name: "carbon"
     static_configs:
       - targets: ["carbon:8084"]
+    metrics_path: '/metrics'
+
+  - job_name: "anomaly"
+    static_configs:
+      - targets: ["anomaly:8080"]
+    metrics_path: '/metrics'
+
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]

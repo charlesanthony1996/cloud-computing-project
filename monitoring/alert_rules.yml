@@ -1,0 +1,69 @@
+groups:
+  - name: fog_detection_alerts
+    interval: 10s
+    rules:
+      - alert: IngestionBufferHigh
+        expr: ingestion_buffer_size > 100
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Ingestion buffer is filling up"
+          description: "Buffer size is {{ $value }}"
+
+      - alert: HighFoGDetectionRate
+        expr: rate(ingestion_fog_total[1m]) > 0.5
+        for: 1m
+        labels:
+          severity: info
+        annotations:
+          summary: "High rate of FoG detections"
+          description: "FoG rate is {{ $value }} per second"
+
+      - alert: FrequentRateChanges
+        expr: rate(carbon_rate_changes_total[2m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Carbon controller changing rates too frequently"
+
+      - alert: GeneratorDown
+        expr: up{job="generator"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Generator service is down"
+
+      - alert: IngestionDown
+        expr: up{job="ingestion"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Ingestion service is down"
+
+      - alert: CarbonControllerDown
+        expr: up{job="carbon"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Carbon controller is down"
+
+      - alert: NoPredictions
+        expr: rate(ingestion_predictions_total[2m]) == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No predictions being generated"
+
+      - alert: HighCarbonMode
+        expr: carbon_current_rate >= 2
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "System running in medium/high carbon mode"
