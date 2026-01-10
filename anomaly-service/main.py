@@ -5,7 +5,7 @@ import numpy as np
 from model_lstm import SimpleLstm, train_lstm, LightLstm
 from codecarbon import EmissionsTracker
 
-from prometheus_client import Gauge, generate_latest
+from prometheus_client import Gauge, generate_latest, Counter
 
 import random
 import time
@@ -56,6 +56,30 @@ simple_model.eval()
 light_model = LightLstm(input_size=3)
 light_model.load_state_dict(torch.load("light_lstm_model.pt", map_location="cpu"))
 light_model.eval()
+
+
+# NEW CARBON METRICS
+carbon_emissions_total = Counter("carbon_emissions_kg_total", "Total CO2 emissions in kg")
+carbon_emissions_per_request = Gauge("carbon_emissions_last_request_kg", "Last request CO2 emissions in kg")
+carbon_emissions_rate = Gauge("carbon_emissions_rate_g_per_sec", "CO2 emissions rate in g/sec")
+
+# Track emissions over time for rate calculation
+emission_history = []
+emission_window_size = 100  # Keep last 100 requests
+
+# NEW ENERGY METRICS
+energy_consumed_total = Counter("energy_consumed_kwh_total", "Total energy consumed in kWh")
+energy_per_request = Gauge("energy_last_request_wh", "Last request energy in Wh")
+power_consumption = Gauge("power_consumption_watts", "Current power consumption in Watts")
+inference_duration = Gauge("inference_duration_ms", "Last inference duration in ms")
+
+# Energy efficiency metric (predictions per kWh)
+predictions_per_kwh = Gauge("predictions_per_kwh", "Energy efficiency: predictions per kWh")
+
+# Track metrics for efficiency calculation
+total_predictions = 0
+total_energy_kwh = 0.0
+
 
 # if os.path.exists("simple_lstm_model.pt"):
 #     simple_model.load_state_dict(torch.load("simple_lstm_model.pt", map_location="cpu"))
@@ -165,6 +189,8 @@ def metrics():
 def predict(payload: dict):
     global USE_LIGHT_MODEL
 
+    start_time = time.time()
+
     tracker = EmissionsTracker()
     tracker.start()
 
@@ -211,10 +237,71 @@ def predict(payload: dict):
             pred = torch.argmax(out, dim = 1).item()
 
         # Measure emissions for this request
-        emissions = tracker.stop()
-        print(f"Request emissions: {emissions:.6f} kg CO2e")
+        emissions_kg = tracker.stop()
 
-        return {"FoG": bool(pred), "mode": "eco" if USE_LIGHT_MODEL else "performance"}
+        # Calculate duration
+        duration_ms = (time.time() - start_time) * 1000
+        inference_duration.set(duration_ms)
+
+        # Get energy data from CodeCarbon
+        # CodeCarbon tracks energy internally - we estimate based on duration and typical power
+        # For more accurate tracking, you'd parse CodeCarbon's output
+        
+        # Typical power consumption estimates (adjust based on your hardware)
+        # CPU inference: 15-30W for simple model, 5-10W for light model
+        estimated_power_watts = 25.0 if MODE == "performance" else 8.0
+
+
+        # Energy = Power × Time
+        energy_kwh = (estimated_power_watts * (duration_ms / 1000) / 3600) / 1000
+        energy_wh = energy_kwh * 1000  # Convert to Wh for readability
+
+
+        # Update Prometheus metrics
+        if emissions_kg and emissions_kg > 0:
+            carbon_emissions_total.inc(emissions_kg)
+            carbon_emissions_per_request.set(emissions_kg)
+        
+        if energy_kwh > 0:
+            energy_consumed_total.inc(energy_kwh)
+            energy_per_request.set(energy_wh)
+            power_consumption.set(estimated_power_watts)
+
+            # Update efficiency metric
+            total_predictions += 1
+            total_energy_kwh += energy_kwh
+            
+            if total_energy_kwh > 0:
+                efficiency = total_predictions / total_energy_kwh
+                predictions_per_kwh.set(efficiency)
+
+            print(f"[Energy] Power: {estimated_power_watts:.1f}W | "
+                  f"Energy: {energy_wh:.4f}Wh | "
+                  f"Duration: {duration_ms:.1f}ms | "
+                  f"Mode: {MODE}")
+            
+            # Track emission history for rate calculation
+            emission_history.append(emissions_kg)
+            if len(emission_history) > emission_window_size:
+                emission_history.pop(0)
+            
+            # Calculate emissions rate (g/sec)
+            # Assuming ~1 request takes ~0.1 seconds
+            avg_emissions = sum(emission_history) / len(emission_history)
+            emissions_rate_g = (avg_emissions * 1000) / 0.1  # Convert to g/sec
+            carbon_emissions_rate.set(emissions_rate_g)
+            
+            print(f"[Carbon] Inference emissions: {emissions_kg:.6f} kg CO2 (mode: {MODE})")
+        print(f"Request emissions: {emissions_kg:.6f} kg CO2e")
+
+        return {
+            "FoG": bool(pred), 
+            "mode": "eco" if USE_LIGHT_MODEL else "performance", 
+            "emissions_kg": emissions_kg, 
+            "energy_wh": energy_wh,
+            "power_watts": estimated_power_watts,
+            "duration_ms": duration_ms
+        }
 
     except Exception as e:
         tracker.stop()
